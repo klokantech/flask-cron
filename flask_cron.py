@@ -39,14 +39,14 @@ class Cron:
     def run(self):
         current_app.logger.info('Starting cron')
         self.stopped = False
-        signal(SIGINT, lambda signo, frame: self.stop())
-        signal(SIGTERM, lambda signo, frame: self.stop())
+        signal(SIGINT, self.stop)
+        signal(SIGTERM, self.stop)
         while not self.stopped:
             self.scheduler.run_pending()
             sleep(self.scheduler.idle_seconds)
         current_app.logger.info('Terminating cron')
 
-    def stop(self):
+    def stop(self, signo=None, frame=None):
         self.stopped = True
 
 
