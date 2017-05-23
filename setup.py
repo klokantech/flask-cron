@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='Flask-Cron',
-    version='1.0',
+    version='1.1',
     description='Periodic task execution for Flask',
     py_modules=['flask_cron'],
     install_requires=[
