@@ -1,7 +1,6 @@
 import re
 
-from flask import current_app
-from flask_script import Command
+from click import Command
 from schedule import Scheduler
 from signal import signal, SIGINT, SIGTERM
 from time import sleep
@@ -12,13 +11,16 @@ class Cron:
     pattern = re.compile(r'every (\d+ )?(\w+)(?: at (\d\d:\d\d))?$')
 
     def __init__(self, app=None):
+        self.app = None
         self.scheduler = Scheduler()
         self.stopped = True
         if app is not None:
             self.init_app(app)
 
     def init_app(self, app):
+        self.app = app
         app.extensions['cron'] = self
+        app.cli.add_command(Command('cron', callback=self.run))
 
     def task(self, when):
         def decorator(func):
@@ -37,19 +39,14 @@ class Cron:
         return decorator
 
     def run(self):
-        current_app.logger.info('Starting cron')
+        self.app.logger.info('Starting cron')
         self.stopped = False
         signal(SIGINT, self.stop)
         signal(SIGTERM, self.stop)
         while not self.stopped:
             self.scheduler.run_pending()
             sleep(self.scheduler.idle_seconds)
-        current_app.logger.info('Terminating cron')
+        self.app.logger.info('Terminating cron')
 
     def stop(self, signo=None, frame=None):
         self.stopped = True
-
-
-@Command
-def CronCommand():
-    current_app.extensions['cron'].run()
